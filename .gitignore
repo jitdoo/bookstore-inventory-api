@@ -22,3 +22,17 @@ lerna-debug.log*
 # temp directory
 .temp
 .tmp
+
+# Personal memo
+memo.txt
+memo.json
+memo.sql
+
+# OS
+.DS_Store
+
+# JWT keys
+keys/*.pem
+keys/*.crt
+keys/*.key
+!/keys/.gitkeep
