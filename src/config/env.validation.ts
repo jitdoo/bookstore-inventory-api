@@ -28,6 +28,12 @@ class EnvironmentVariables {
 
   @IsString()
   DB_NAME!: string;
+
+  @IsString()
+  REDIS_HOST!: string;
+
+  @IsNumber()
+  REDIS_PORT!: number;
 }
 
 export function validate(config: Record<string, unknown>) {
