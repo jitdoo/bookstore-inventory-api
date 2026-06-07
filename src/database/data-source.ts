@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import { DataSource, DataSourceOptions } from 'typeorm';
+import { TypeOrmWinstonLogger } from '../common/logger/typeorm-winston.logger';
 
 const isCompiled = __filename.endsWith('.js');
 
@@ -17,7 +18,8 @@ export const dataSourceOptions: DataSourceOptions = {
       : 'src/database/migrations/*.ts',
   ],
   synchronize: false,
-  logging: process.env.NODE_ENV === 'development',
+  logger: new TypeOrmWinstonLogger(),
+  logging: process.env.NODE_ENV === 'development' ? 'all' : ['error', 'warn'],
 };
 
 export default new DataSource(dataSourceOptions);

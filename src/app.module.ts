@@ -6,6 +6,7 @@ import { validate } from './config/env.validation';
 import { DatabaseModule } from './database/database.module';
 import { RedisModule } from './redis/redis.module';
 import { HealthModule } from './health/health.module';
+import { LoggerModule } from './common/logger/logger.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { HealthModule } from './health/health.module';
       isGlobal: true,
       validate,
     }),
+    LoggerModule,
     DatabaseModule,
     RedisModule,
     HealthModule,
