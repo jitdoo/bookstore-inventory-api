@@ -1,6 +1,6 @@
 import { Test } from '@nestjs/testing';
 import { JwtService } from '@nestjs/jwt';
-import { UnauthorizedException } from '@nestjs/common';
+import { UnauthorizedException, BadRequestException } from '@nestjs/common';
 import * as argon2 from 'argon2';
 import { AuthService } from './auth.service';
 import { UsersService } from '../users/users.service';
@@ -16,12 +16,20 @@ const DAY_SEC = 24 * 60 * 60;
 
 describe('AuthService', () => {
   let service: AuthService;
-  let usersService: { findByEmail: jest.Mock; findById: jest.Mock };
+  let usersService: {
+    findByEmail: jest.Mock;
+    findById: jest.Mock;
+    updatePassword: jest.Mock;
+  };
   let jwtService: { sign: jest.Mock; verify: jest.Mock };
   let redis: { get: jest.Mock; set: jest.Mock; del: jest.Mock };
 
   beforeEach(async () => {
-    usersService = { findByEmail: jest.fn(), findById: jest.fn() };
+    usersService = {
+      findByEmail: jest.fn(),
+      findById: jest.fn(),
+      updatePassword: jest.fn(),
+    };
     jwtService = {
       sign: jest.fn().mockReturnValue('signed.jwt.token'),
       verify: jest
@@ -188,6 +196,13 @@ describe('AuthService', () => {
           role: UserRole.SUPER_ADMIN,
         }),
       );
+
+      usersService.findById.mockResolvedValue({
+        id: '1',
+        role: UserRole.SUPER_ADMIN,
+        passwordUpdatedAt: new Date(),
+      });
+
       const result = await service.refresh(token);
       expect(result.accessToken).toBe('signed.jwt.token');
       expect(result.refreshToken).toBe('signed.jwt.token');
@@ -206,6 +221,67 @@ describe('AuthService', () => {
       await expect(service.refresh('bad-token')).rejects.toThrow(
         UnauthorizedException,
       );
+    });
+  });
+
+  describe('changePassword', () => {
+    it('throws when the user is not found', async () => {
+      usersService.findById.mockResolvedValue(null);
+
+      await expect(
+        service.changePassword('1', 'Current123!', 'NewPass123!'),
+      ).rejects.toThrow(UnauthorizedException);
+      expect(usersService.updatePassword).not.toHaveBeenCalled();
+    });
+
+    it('throws when the current password is incorrect', async () => {
+      const currentHash = await argon2.hash('Current123!');
+      usersService.findById.mockResolvedValue({
+        id: '1',
+        passwordHash: currentHash,
+        role: UserRole.SUPER_ADMIN,
+      });
+
+      await expect(
+        service.changePassword('1', 'WrongCurrent!', 'NewPass123!'),
+      ).rejects.toThrow(UnauthorizedException);
+      expect(usersService.updatePassword).not.toHaveBeenCalled();
+    });
+
+    it('rejects when the new password is the same as the current one', async () => {
+      const currentHash = await argon2.hash('SamePass123!');
+      usersService.findById.mockResolvedValue({
+        id: '1',
+        passwordHash: currentHash,
+        role: UserRole.SUPER_ADMIN,
+      });
+
+      await expect(
+        service.changePassword('1', 'SamePass123!', 'SamePass123!'),
+      ).rejects.toThrow(BadRequestException);
+      expect(usersService.updatePassword).not.toHaveBeenCalled();
+    });
+
+    it('updates the password and revokes the session on success', async () => {
+      const currentHash = await argon2.hash('Current123!');
+      usersService.findById.mockResolvedValue({
+        id: '1',
+        passwordHash: currentHash,
+        role: UserRole.SUPER_ADMIN,
+      });
+
+      await service.changePassword('1', 'Current123!', 'NewPass123!');
+
+      // password is updated (hash is passed, not plaintext)
+      expect(usersService.updatePassword).toHaveBeenCalledTimes(1);
+      const [calledUserId, calledHash] =
+        usersService.updatePassword.mock.calls[0];
+      expect(calledUserId).toBe('1');
+      expect(calledHash).not.toBe('NewPass123!'); // stored as a hash
+      expect(typeof calledHash).toBe('string');
+
+      // existing session is revoked (force re-login)
+      expect(redis.del).toHaveBeenCalledWith('refresh:1');
     });
   });
 
