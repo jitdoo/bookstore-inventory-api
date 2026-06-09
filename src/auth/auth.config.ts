@@ -23,4 +23,5 @@ export const jwtConstants = {
 export interface JwtPayload {
   sub: string;
   role: string;
+  mustChangePassword: boolean;
 }

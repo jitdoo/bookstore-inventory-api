@@ -135,6 +135,23 @@ paths:
           description: ""
       summary: Rotate tokens using a valid refresh token
       tags: *a4
+  /api/v1/auth/password:
+    patch:
+      operationId: AuthController_changePassword_v1
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChangePasswordDto"
+      responses:
+        "200":
+          description: ""
+      security:
+        - bearer: []
+      summary: Change the current user password
+      tags: *a4
   /api/v1/auth/logout:
     post:
       operationId: AuthController_logout_v1
@@ -179,3 +196,14 @@ components:
           type: string
       required:
         - refreshToken
+    ChangePasswordDto:
+      type: object
+      properties:
+        currentPassword:
+          type: string
+        newPassword:
+          type: string
+          example: Password123
+      required:
+        - currentPassword
+        - newPassword

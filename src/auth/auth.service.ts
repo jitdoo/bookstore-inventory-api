@@ -1,4 +1,9 @@
-import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  UnauthorizedException,
+  BadRequestException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as argon2 from 'argon2';
 import Redis from 'ioredis';
@@ -34,10 +39,12 @@ export class AuthService {
     }
 
     const absoluteExpiresAt = Date.now() + REFRESH_ABSOLUTE_DAYS * DAY_MS;
+    const mustChangePassword = user.passwordUpdatedAt === null;
     const tokens = await this.issueTokens(
       user.id,
       user.role,
       absoluteExpiresAt,
+      mustChangePassword,
     );
 
     // Signal whether the password must be changed on first login
@@ -46,12 +53,11 @@ export class AuthService {
       tokenType: 'Bearer',
       expiresIn: ACCESS_TOKEN_EXPIRES_SEC,
       userId: user.id,
-      mustChangePassword: user.passwordUpdatedAt === null,
+      mustChangePassword,
     };
   }
 
   async refresh(presentedToken: string) {
-    // decode the presented token to get the user ID
     let decoded: JwtPayload;
     try {
       decoded = this.jwtService.verify<JwtPayload>(presentedToken);
@@ -60,35 +66,72 @@ export class AuthService {
     }
 
     const userId = decoded.sub;
-    const key = this.refreshKey(userId);
-    const stored = await this.redis.get(key);
+
+    // Look up the stored token hash and absolute expiry in Redis
+    const stored = await this.redis.get(this.refreshKey(userId));
+
     if (!stored) {
       throw new UnauthorizedException('Refresh token not found');
     }
 
-    // parse the stored token data
-    const { tokenHash, absoluteExpiresAt, role } = JSON.parse(stored) as {
+    const { tokenHash, absoluteExpiresAt } = JSON.parse(stored) as {
       tokenHash: string;
       absoluteExpiresAt: number;
-      role: string;
     };
 
-    // Verify the presented token against the stored hash
     if (!(await argon2.verify(tokenHash, presentedToken))) {
-      // revoke this token
-      await this.redis.del(key);
+      await this.redis.del(this.refreshKey(userId));
       throw new UnauthorizedException('Refresh token mismatch');
     }
 
-    // Reject if absolute expiration (90 days) is exceeded
     if (Date.now() > absoluteExpiresAt) {
-      await this.redis.del(key);
+      await this.redis.del(this.refreshKey(userId));
       throw new UnauthorizedException('Session expired');
     }
 
-    // revoke the old token and issue a new one
-    await this.redis.del(key);
-    return this.issueTokens(userId, role, absoluteExpiresAt);
+    const user = await this.usersService.findById(userId);
+    if (!user) {
+      await this.redis.del(this.refreshKey(userId));
+      throw new UnauthorizedException('User not found');
+    }
+
+    await this.redis.del(this.refreshKey(userId));
+
+    return this.issueTokens(
+      user.id,
+      user.role,
+      absoluteExpiresAt,
+      user.passwordUpdatedAt === null,
+    );
+  }
+
+  async changePassword(
+    userId: string,
+    currentPassword: string,
+    newPassword: string,
+  ) {
+    const user = await this.usersService.findById(userId);
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    const valid = await argon2.verify(user.passwordHash, currentPassword);
+    if (!valid) {
+      throw new UnauthorizedException('Current password is incorrect');
+    }
+
+    // Reject if the new password is the same as the current one
+    if (await argon2.verify(user.passwordHash, newPassword)) {
+      throw new BadRequestException(
+        'New password must be different from the current password',
+      );
+    }
+
+    const newHash = await argon2.hash(newPassword);
+    await this.usersService.updatePassword(userId, newHash);
+
+    // Revoke the current session so the user re-logs in with the new password
+    await this.redis.del(this.refreshKey(userId));
   }
 
   async logout(userId: string) {
@@ -99,11 +142,13 @@ export class AuthService {
     userId: string,
     role: string,
     absoluteExpiresAt: number,
+    mustChangePassword: boolean,
   ) {
     // Create an access token with an expiration of 20 minutes
     const accessToken = this.jwtService.sign({
       sub: userId,
       role,
+      mustChangePassword,
     });
 
     // Create a refresh token with a sliding expiration of 14 days
