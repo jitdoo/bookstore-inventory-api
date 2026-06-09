@@ -25,13 +25,16 @@
     "migration:run": "npm run typeorm -- migration:run",
     "migration:revert": "npm run typeorm -- migration:revert",
     "seed": "ts-node -r tsconfig-paths/register src/database/seeds/index.ts",
-    "keys:generate": "mkdir -p keys && openssl genpkey -algorithm RSA -pkcs8 -out keys/jwt.private.pem -pkeyopt rsa_keygen_bits:2048 && openssl rsa -pubout -in keys/jwt.private.pem -out keys/jwt.public.pem"
+    "keys:generate": "mkdir -p keys && openssl ecparam -name prime256v1 -genkey -noout -out keys/private.pem && openssl ec -in keys/private.pem -pubout -out keys/public.pem"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.4",
     "@nestjs/core": "^11.0.1",
+    "@nestjs/jwt": "^11.0.2",
+    "@nestjs/passport": "^11.0.5",
     "@nestjs/platform-express": "^11.0.1",
+    "@nestjs/swagger": "^11.4.4",
     "@nestjs/terminus": "^11.1.1",
     "@nestjs/typeorm": "^11.0.1",
     "argon2": "^0.44.0",
@@ -39,11 +42,14 @@
     "class-validator": "^0.15.1",
     "ioredis": "^5.11.1",
     "nest-winston": "^1.10.2",
+    "passport": "^0.7.0",
+    "passport-jwt": "^4.0.1",
     "pg": "^8.21.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "typeorm": "^0.3.30",
-    "winston": "^3.19.0"
+    "winston": "^3.19.0",
+    "yaml": "^2.9.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",
@@ -54,6 +60,7 @@
     "@types/express": "^5.0.0",
     "@types/jest": "^30.0.0",
     "@types/node": "^22.19.19",
+    "@types/passport-jwt": "^4.0.1",
     "@types/supertest": "^6.0.2",
     "eslint": "^9.18.0",
     "eslint-config-prettier": "^10.0.1",
