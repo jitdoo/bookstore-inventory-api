@@ -163,6 +163,134 @@ paths:
         - bearer: []
       summary: Log out and revoke the refresh token
       tags: *a4
+  /api/v1/publishers:
+    get:
+      operationId: PublishersController_findAll_v1
+      parameters:
+        - name: page
+          required: false
+          in: query
+          schema:
+            minimum: 1
+            default: 1
+            type: number
+        - name: limit
+          required: false
+          in: query
+          schema:
+            minimum: 1
+            maximum: 100
+            default: 20
+            type: number
+        - name: sortDirection
+          required: false
+          in: query
+          schema:
+            default: DESC
+            type: string
+            enum:
+              - ASC
+              - DESC
+        - name: searchField
+          required: false
+          in: query
+          schema:
+            type: string
+            enum:
+              - name
+              - businessNumber
+        - name: search
+          required: false
+          in: query
+          description: Search keyword (used with searchField)
+          schema:
+            type: string
+        - name: sortBy
+          required: false
+          in: query
+          schema:
+            default: createdAt
+            type: string
+            enum:
+              - name
+              - createdAt
+      responses:
+        "200":
+          description: ""
+      security: &a5
+        - bearer: []
+      summary: List publishers (paginated, searchable by name)
+      tags: &a6
+        - publishers
+    post:
+      operationId: PublishersController_create_v1
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreatePublisherDto"
+      responses:
+        "201":
+          description: ""
+          content:
+            application/json:
+              schema:
+                example:
+                  id: "1"
+      security: *a5
+      summary: Create a publisher (SUPER_ADMIN only)
+      tags: *a6
+  /api/v1/publishers/{id}:
+    get:
+      operationId: PublishersController_findOne_v1
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ""
+      security: *a5
+      summary: Get a publisher by id
+      tags: *a6
+    patch:
+      operationId: PublishersController_update_v1
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdatePublisherDto"
+      responses:
+        "200":
+          description: ""
+      security: *a5
+      summary: Update a publisher (SUPER_ADMIN only)
+      tags: *a6
+    delete:
+      operationId: PublishersController_remove_v1
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ""
+      security: *a5
+      summary: Delete a publisher (SUPER_ADMIN only)
+      tags: *a6
 info:
   title: Bookstore Inventory API
   description: REST API for bookstore chain inventory and replenishment
@@ -207,3 +335,60 @@ components:
       required:
         - currentPassword
         - newPassword
+    CreatePublisherDto:
+      type: object
+      properties:
+        name:
+          type: string
+        businessNumber:
+          type: string
+          example: "1234567890"
+        phone:
+          type: string
+          example: "01012345678"
+        email:
+          type: string
+          example: example@example.com
+        zipcode:
+          type: string
+          example: "06234"
+        address:
+          type: string
+        addressDetail:
+          type: string
+        contractStartedAt:
+          type: string
+          example: 2026-01-01
+        contractEndedAt:
+          type: string
+          example: 2027-01-01
+      required:
+        - name
+        - businessNumber
+    UpdatePublisherDto:
+      type: object
+      properties:
+        name:
+          type: string
+        businessNumber:
+          type: string
+          example: "1234567890"
+        phone:
+          type: string
+          example: "01012345678"
+        email:
+          type: string
+          example: example@example.com
+        zipcode:
+          type: string
+          example: "06234"
+        address:
+          type: string
+        addressDetail:
+          type: string
+        contractStartedAt:
+          type: string
+          example: 2026-01-01
+        contractEndedAt:
+          type: string
+          example: 2027-01-01
