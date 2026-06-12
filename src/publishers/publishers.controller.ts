@@ -16,7 +16,6 @@ import {
   ApiResponse,
 } from '@nestjs/swagger';
 import { Roles } from '../common/decorators/roles.decorator';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { UserRole } from '../users/entities/user.entity';
 import { CreatePublisherDto } from './dto/create-publisher.dto';
@@ -26,7 +25,6 @@ import { PublisherQueryDto } from './dto/publisher-query.dto';
 
 @ApiTags('publishers')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
 @Controller('publishers')
 export class PublishersController {
   constructor(private readonly publishersService: PublishersService) {}

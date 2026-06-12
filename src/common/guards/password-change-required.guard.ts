@@ -5,6 +5,7 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 import { ALLOW_PASSWORD_CHANGE_KEY } from '../decorators/allow-password-change.decorator';
 
 @Injectable()
@@ -12,12 +13,18 @@ export class PasswordChangeRequiredGuard implements CanActivate {
   constructor(private readonly reflector: Reflector) {}
 
   canActivate(context: ExecutionContext): boolean {
-    // Routes explicitly allowed even when a password change is pending
+    const targets = [context.getHandler(), context.getClass()];
+
+    // Public routes and the password-change route itself are exempt
+    const isPublic = this.reflector.getAllAndOverride<boolean>(
+      IS_PUBLIC_KEY,
+      targets,
+    );
     const isAllowed = this.reflector.getAllAndOverride<boolean>(
       ALLOW_PASSWORD_CHANGE_KEY,
-      [context.getHandler(), context.getClass()],
+      targets,
     );
-    if (isAllowed) {
+    if (isPublic || isAllowed) {
       return true;
     }
 

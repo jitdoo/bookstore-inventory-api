@@ -7,6 +7,9 @@ import { HealthModule } from './health/health.module';
 import { LoggerModule } from './common/logger/logger.module';
 import { AuthModule } from './auth/auth.module';
 import { PublishersModule } from './publishers/publishers.module';
+import { APP_GUARD } from '@nestjs/core';
+import { JwtAuthGuard } from './auth/jwt-auth.guard';
+import { PasswordChangeRequiredGuard } from './common/guards/password-change-required.guard';
 
 @Module({
   imports: [
@@ -20,6 +23,10 @@ import { PublishersModule } from './publishers/publishers.module';
     HealthModule,
     AuthModule,
     PublishersModule,
+  ],
+  providers: [
+    { provide: APP_GUARD, useClass: JwtAuthGuard },
+    { provide: APP_GUARD, useClass: PasswordChangeRequiredGuard },
   ],
 })
 export class AppModule {}
