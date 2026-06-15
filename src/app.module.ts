@@ -10,6 +10,7 @@ import { PublishersModule } from './publishers/publishers.module';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { PasswordChangeRequiredGuard } from './common/guards/password-change-required.guard';
+import { AuthorsModule } from './authors/authors.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { PasswordChangeRequiredGuard } from './common/guards/password-change-req
     HealthModule,
     AuthModule,
     PublishersModule,
+    AuthorsModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: JwtAuthGuard },

@@ -1,4 +1,3 @@
-// create-publisher.dto.ts
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsDateString,

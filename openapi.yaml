@@ -291,6 +291,133 @@ paths:
       security: *a5
       summary: Delete a publisher (SUPER_ADMIN only)
       tags: *a6
+  /api/v1/authors:
+    get:
+      operationId: AuthorsController_findAll_v1
+      parameters:
+        - name: page
+          required: false
+          in: query
+          schema:
+            minimum: 1
+            default: 1
+            type: number
+        - name: limit
+          required: false
+          in: query
+          schema:
+            minimum: 1
+            maximum: 100
+            default: 20
+            type: number
+        - name: sortDirection
+          required: false
+          in: query
+          schema:
+            default: DESC
+            type: string
+            enum:
+              - ASC
+              - DESC
+        - name: searchField
+          required: false
+          in: query
+          schema:
+            type: string
+            enum:
+              - name
+        - name: search
+          required: false
+          in: query
+          description: Search keyword (used with searchField)
+          schema:
+            type: string
+        - name: sortBy
+          required: false
+          in: query
+          schema:
+            default: createdAt
+            type: string
+            enum:
+              - name
+              - createdAt
+      responses:
+        "200":
+          description: ""
+      security: &a7
+        - bearer: []
+      summary: List authors (paginated, searchable by name)
+      tags: &a8
+        - authors
+    post:
+      operationId: AuthorsController_create_v1
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAuthorDto"
+      responses:
+        "201":
+          description: ""
+          content:
+            application/json:
+              schema:
+                example:
+                  id: "1"
+      security: *a7
+      summary: Create a author (SUPER_ADMIN only)
+      tags: *a8
+  /api/v1/authors/{id}:
+    get:
+      operationId: AuthorsController_findOne_v1
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ""
+      security: *a7
+      summary: Get a author by id
+      tags: *a8
+    patch:
+      operationId: AuthorsController_update_v1
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateAuthorDto"
+      responses:
+        "200":
+          description: ""
+      security: *a7
+      summary: Update a author (SUPER_ADMIN only)
+      tags: *a8
+    delete:
+      operationId: AuthorsController_remove_v1
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ""
+      security: *a7
+      summary: Delete a author (SUPER_ADMIN only)
+      tags: *a8
 info:
   title: Bookstore Inventory API
   description: REST API for bookstore chain inventory and replenishment
@@ -392,3 +519,27 @@ components:
         contractEndedAt:
           type: string
           example: 2027-01-01
+    CreateAuthorDto:
+      type: object
+      properties:
+        name:
+          type: string
+        birthDate:
+          type: string
+          example: 1990-01-01
+        countryCode:
+          type: string
+          example: KOR
+      required:
+        - name
+    UpdateAuthorDto:
+      type: object
+      properties:
+        name:
+          type: string
+        birthDate:
+          type: string
+          example: 1990-01-01
+        countryCode:
+          type: string
+          example: KOR
