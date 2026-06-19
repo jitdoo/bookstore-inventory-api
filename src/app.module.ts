@@ -11,6 +11,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { PasswordChangeRequiredGuard } from './common/guards/password-change-required.guard';
 import { AuthorsModule } from './authors/authors.module';
+import { BooksModule } from './books/books.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { AuthorsModule } from './authors/authors.module';
     AuthModule,
     PublishersModule,
     AuthorsModule,
+    BooksModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: JwtAuthGuard },
