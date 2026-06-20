@@ -12,6 +12,7 @@ import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { PasswordChangeRequiredGuard } from './common/guards/password-change-required.guard';
 import { AuthorsModule } from './authors/authors.module';
 import { BooksModule } from './books/books.module';
+import { BranchesModule } from './branches/branches.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { BooksModule } from './books/books.module';
     PublishersModule,
     AuthorsModule,
     BooksModule,
+    BranchesModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: JwtAuthGuard },

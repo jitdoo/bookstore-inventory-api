@@ -545,6 +545,134 @@ paths:
       security: *a9
       summary: Delete a book (SUPER_ADMIN only)
       tags: *a10
+  /api/v1/branches:
+    get:
+      operationId: BranchesController_findAll_v1
+      parameters:
+        - name: page
+          required: false
+          in: query
+          schema:
+            minimum: 1
+            default: 1
+            type: number
+        - name: limit
+          required: false
+          in: query
+          schema:
+            minimum: 1
+            maximum: 100
+            default: 20
+            type: number
+        - name: sortDirection
+          required: false
+          in: query
+          schema:
+            default: DESC
+            type: string
+            enum:
+              - ASC
+              - DESC
+        - name: searchField
+          required: false
+          in: query
+          schema:
+            type: string
+            enum:
+              - name
+              - code
+        - name: search
+          required: false
+          in: query
+          description: Search keyword (used with searchField)
+          schema:
+            type: string
+        - name: sortBy
+          required: false
+          in: query
+          schema:
+            default: openDate
+            type: string
+            enum:
+              - name
+              - openDate
+      responses:
+        "200":
+          description: ""
+      security: &a11
+        - bearer: []
+      summary: List branches (paginated, searchable by name)
+      tags: &a12
+        - branches
+    post:
+      operationId: BranchesController_create_v1
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateBranchDto"
+      responses:
+        "201":
+          description: ""
+          content:
+            application/json:
+              schema:
+                example:
+                  id: "1"
+      security: *a11
+      summary: Create a branch (SUPER_ADMIN only)
+      tags: *a12
+  /api/v1/branches/{id}:
+    get:
+      operationId: BranchesController_findOne_v1
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ""
+      security: *a11
+      summary: Get a branch by id
+      tags: *a12
+    patch:
+      operationId: BranchesController_update_v1
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateBranchDto"
+      responses:
+        "200":
+          description: ""
+      security: *a11
+      summary: Update a branch (SUPER_ADMIN only)
+      tags: *a12
+    delete:
+      operationId: BranchesController_remove_v1
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ""
+      security: *a11
+      summary: Delete a branch (SUPER_ADMIN only)
+      tags: *a12
 info:
   title: Bookstore Inventory API
   description: REST API for bookstore chain inventory and replenishment
@@ -687,7 +815,7 @@ components:
           type: string
           example: 2024-03-15
         authorIds:
-          example: &a11
+          example: &a13
             - "1"
             - "2"
           type: array
@@ -716,7 +844,52 @@ components:
           type: string
           example: 2024-03-15
         authorIds:
-          example: *a11
+          example: *a13
           type: array
           items:
             type: string
+    CreateBranchDto:
+      type: object
+      properties:
+        name:
+          type: string
+        code:
+          type: string
+          example: BERLIN001
+        phone:
+          type: string
+          example: "01012345678"
+        zipcode:
+          type: string
+          example: "06234"
+        address:
+          type: string
+        addressDetail:
+          type: string
+        open_date:
+          type: string
+          example: 2026-01-01
+      required:
+        - name
+        - code
+    UpdateBranchDto:
+      type: object
+      properties:
+        name:
+          type: string
+        code:
+          type: string
+          example: BERLIN001
+        phone:
+          type: string
+          example: "01012345678"
+        zipcode:
+          type: string
+          example: "06234"
+        address:
+          type: string
+        addressDetail:
+          type: string
+        open_date:
+          type: string
+          example: 2026-01-01
