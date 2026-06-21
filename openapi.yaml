@@ -738,10 +738,10 @@ components:
           type: string
         addressDetail:
           type: string
-        contractStartedAt:
+        contractStartDate:
           type: string
           example: 2026-01-01
-        contractEndedAt:
+        contractEndDate:
           type: string
           example: 2027-01-01
       required:
@@ -768,10 +768,10 @@ components:
           type: string
         addressDetail:
           type: string
-        contractStartedAt:
+        contractStartDate:
           type: string
           example: 2026-01-01
-        contractEndedAt:
+        contractEndDate:
           type: string
           example: 2027-01-01
     CreateAuthorDto:

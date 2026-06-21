@@ -38,11 +38,11 @@ export class Publisher {
   })
   addressDetail!: string | null;
 
-  @Column({ type: 'date', name: 'contract_started_at', nullable: true })
-  contractStartedAt!: string | null;
+  @Column({ type: 'date', name: 'contract_start_date', nullable: true })
+  contractStartDate!: string | null;
 
-  @Column({ type: 'date', name: 'contract_ended_at', nullable: true })
-  contractEndedAt!: string | null;
+  @Column({ type: 'date', name: 'contract_end_date', nullable: true })
+  contractEndDate!: string | null;
 
   @CreateDateColumn({ type: 'timestamptz', name: 'created_at' })
   createdAt!: Date;
