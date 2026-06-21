@@ -57,10 +57,10 @@ export class CreatePublisherDto {
   @ApiPropertyOptional({ example: '2026-01-01' })
   @IsOptional()
   @IsDateString()
-  contractStartedAt?: string;
+  contractStartDate?: string;
 
   @ApiPropertyOptional({ example: '2027-01-01' })
   @IsOptional()
   @IsDateString()
-  contractEndedAt?: string;
+  contractEndDate?: string;
 }
