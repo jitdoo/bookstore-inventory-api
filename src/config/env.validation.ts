@@ -34,6 +34,9 @@ class EnvironmentVariables {
 
   @IsNumber()
   REDIS_PORT!: number;
+
+  @IsString()
+  DEFAULT_USER_PASSWORD!: string;
 }
 
 export function validate(config: Record<string, unknown>) {

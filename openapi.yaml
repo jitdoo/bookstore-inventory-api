@@ -163,6 +163,185 @@ paths:
         - bearer: []
       summary: Log out and revoke the refresh token
       tags: *a4
+  /api/v1/users:
+    post:
+      operationId: UsersController_create_v1
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateUserDto"
+      responses:
+        "201":
+          description: ""
+          content:
+            application/json:
+              schema:
+                example:
+                  id: "1"
+      security: &a5
+        - bearer: []
+      summary: "Create a user (SUPER_ADMIN: anyone; BRANCH_MANAGER: staff in own
+        branch)"
+      tags: &a6
+        - users
+    get:
+      operationId: UsersController_findAll_v1
+      parameters:
+        - name: page
+          required: false
+          in: query
+          schema:
+            minimum: 1
+            default: 1
+            type: number
+        - name: limit
+          required: false
+          in: query
+          schema:
+            minimum: 1
+            maximum: 100
+            default: 20
+            type: number
+        - name: sortDirection
+          required: false
+          in: query
+          schema:
+            default: DESC
+            type: string
+            enum:
+              - ASC
+              - DESC
+        - name: searchField
+          required: false
+          in: query
+          schema:
+            type: string
+            enum:
+              - name
+              - email
+        - name: search
+          required: false
+          in: query
+          description: Search keyword (used with searchField)
+          schema:
+            type: string
+        - name: sortBy
+          required: false
+          in: query
+          schema:
+            default: createdAt
+            type: string
+            enum:
+              - name
+              - email
+              - createdAt
+        - name: branchId
+          required: false
+          in: query
+          schema:
+            type: string
+        - name: role
+          required: false
+          in: query
+          schema:
+            type: string
+            enum:
+              - SUPER_ADMIN
+              - BRANCH_MANAGER
+              - BRANCH_STAFF
+        - name: userRole
+          required: false
+          in: query
+          schema:
+            type: string
+            enum:
+              - SUPER_ADMIN
+              - BRANCH_MANAGER
+              - BRANCH_STAFF
+      responses:
+        "200":
+          description: ""
+      security: *a5
+      summary: List users (paginated, searchable)
+      tags: *a6
+  /api/v1/users/me:
+    get:
+      operationId: UsersController_getProfile_v1
+      parameters: []
+      responses:
+        "200":
+          description: ""
+      security: *a5
+      summary: Get the current user profile
+      tags: *a6
+    patch:
+      operationId: UsersController_updateProfile_v1
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateMyProfileDto"
+      responses:
+        "204":
+          description: ""
+      security: *a5
+      summary: Update the current user profile
+      tags: *a6
+  /api/v1/users/{id}:
+    get:
+      operationId: UsersController_findOne_v1
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ""
+      security: *a5
+      summary: Get a user by id
+      tags: *a6
+    patch:
+      operationId: UsersController_update_v1
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserDto"
+      responses:
+        "204":
+          description: ""
+      security: *a5
+      summary: "Update a user (SUPER_ADMIN: anyone; BRANCH_MANAGER: staff in own
+        branch)"
+      tags: *a6
+    delete:
+      operationId: UsersController_remove_v1
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        "204":
+          description: ""
+      security: *a5
+      summary: Delete a user (SUPER_ADMIN or BRANCH_MANAGER)
+      tags: *a6
   /api/v1/publishers:
     get:
       operationId: PublishersController_findAll_v1
@@ -217,10 +396,10 @@ paths:
       responses:
         "200":
           description: ""
-      security: &a5
+      security: &a7
         - bearer: []
       summary: List publishers (paginated, searchable by name)
-      tags: &a6
+      tags: &a8
         - publishers
     post:
       operationId: PublishersController_create_v1
@@ -239,9 +418,9 @@ paths:
               schema:
                 example:
                   id: "1"
-      security: *a5
+      security: *a7
       summary: Create a publisher (SUPER_ADMIN only)
-      tags: *a6
+      tags: *a8
   /api/v1/publishers/{id}:
     get:
       operationId: PublishersController_findOne_v1
@@ -254,9 +433,9 @@ paths:
       responses:
         "200":
           description: ""
-      security: *a5
+      security: *a7
       summary: Get a publisher by id
-      tags: *a6
+      tags: *a8
     patch:
       operationId: PublishersController_update_v1
       parameters:
@@ -274,9 +453,9 @@ paths:
       responses:
         "200":
           description: ""
-      security: *a5
+      security: *a7
       summary: Update a publisher (SUPER_ADMIN only)
-      tags: *a6
+      tags: *a8
     delete:
       operationId: PublishersController_remove_v1
       parameters:
@@ -288,9 +467,9 @@ paths:
       responses:
         "200":
           description: ""
-      security: *a5
+      security: *a7
       summary: Delete a publisher (SUPER_ADMIN only)
-      tags: *a6
+      tags: *a8
   /api/v1/authors:
     get:
       operationId: AuthorsController_findAll_v1
@@ -344,10 +523,10 @@ paths:
       responses:
         "200":
           description: ""
-      security: &a7
+      security: &a9
         - bearer: []
       summary: List authors (paginated, searchable by name)
-      tags: &a8
+      tags: &a10
         - authors
     post:
       operationId: AuthorsController_create_v1
@@ -366,9 +545,9 @@ paths:
               schema:
                 example:
                   id: "1"
-      security: *a7
+      security: *a9
       summary: Create a author (SUPER_ADMIN only)
-      tags: *a8
+      tags: *a10
   /api/v1/authors/{id}:
     get:
       operationId: AuthorsController_findOne_v1
@@ -381,9 +560,9 @@ paths:
       responses:
         "200":
           description: ""
-      security: *a7
+      security: *a9
       summary: Get a author by id
-      tags: *a8
+      tags: *a10
     patch:
       operationId: AuthorsController_update_v1
       parameters:
@@ -401,9 +580,9 @@ paths:
       responses:
         "200":
           description: ""
-      security: *a7
+      security: *a9
       summary: Update a author (SUPER_ADMIN only)
-      tags: *a8
+      tags: *a10
     delete:
       operationId: AuthorsController_remove_v1
       parameters:
@@ -415,9 +594,9 @@ paths:
       responses:
         "200":
           description: ""
-      security: *a7
+      security: *a9
       summary: Delete a author (SUPER_ADMIN only)
-      tags: *a8
+      tags: *a10
   /api/v1/books:
     get:
       operationId: BooksController_findAll_v1
@@ -471,10 +650,10 @@ paths:
       responses:
         "200":
           description: ""
-      security: &a9
+      security: &a11
         - bearer: []
       summary: List books (paginated, searchable, sortable)
-      tags: &a10
+      tags: &a12
         - books
     post:
       operationId: BooksController_create_v1
@@ -493,9 +672,9 @@ paths:
               schema:
                 example:
                   id: "1"
-      security: *a9
+      security: *a11
       summary: Create a book (SUPER_ADMIN only)
-      tags: *a10
+      tags: *a12
   /api/v1/books/{id}:
     get:
       operationId: BooksController_findOne_v1
@@ -508,9 +687,9 @@ paths:
       responses:
         "200":
           description: ""
-      security: *a9
+      security: *a11
       summary: Get a book by id (with publisher and authors)
-      tags: *a10
+      tags: *a12
     patch:
       operationId: BooksController_update_v1
       parameters:
@@ -528,9 +707,9 @@ paths:
       responses:
         "204":
           description: ""
-      security: *a9
+      security: *a11
       summary: Update a book (SUPER_ADMIN only)
-      tags: *a10
+      tags: *a12
     delete:
       operationId: BooksController_remove_v1
       parameters:
@@ -542,9 +721,9 @@ paths:
       responses:
         "204":
           description: ""
-      security: *a9
+      security: *a11
       summary: Delete a book (SUPER_ADMIN only)
-      tags: *a10
+      tags: *a12
   /api/v1/branches:
     get:
       operationId: BranchesController_findAll_v1
@@ -599,10 +778,10 @@ paths:
       responses:
         "200":
           description: ""
-      security: &a11
+      security: &a13
         - bearer: []
       summary: List branches (paginated, searchable by name)
-      tags: &a12
+      tags: &a14
         - branches
     post:
       operationId: BranchesController_create_v1
@@ -621,9 +800,9 @@ paths:
               schema:
                 example:
                   id: "1"
-      security: *a11
+      security: *a13
       summary: Create a branch (SUPER_ADMIN only)
-      tags: *a12
+      tags: *a14
   /api/v1/branches/{id}:
     get:
       operationId: BranchesController_findOne_v1
@@ -636,9 +815,9 @@ paths:
       responses:
         "200":
           description: ""
-      security: *a11
+      security: *a13
       summary: Get a branch by id
-      tags: *a12
+      tags: *a14
     patch:
       operationId: BranchesController_update_v1
       parameters:
@@ -656,9 +835,9 @@ paths:
       responses:
         "200":
           description: ""
-      security: *a11
+      security: *a13
       summary: Update a branch (SUPER_ADMIN only)
-      tags: *a12
+      tags: *a14
     delete:
       operationId: BranchesController_remove_v1
       parameters:
@@ -670,9 +849,9 @@ paths:
       responses:
         "200":
           description: ""
-      security: *a11
+      security: *a13
       summary: Delete a branch (SUPER_ADMIN only)
-      tags: *a12
+      tags: *a14
 info:
   title: Bookstore Inventory API
   description: REST API for bookstore chain inventory and replenishment
@@ -717,6 +896,39 @@ components:
       required:
         - currentPassword
         - newPassword
+    CreateUserDto:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+          example: user@example.com
+        branchId:
+          type: string
+        role:
+          type: string
+          enum:
+            - SUPER_ADMIN
+            - BRANCH_MANAGER
+            - BRANCH_STAFF
+      required:
+        - name
+        - email
+        - branchId
+        - role
+    UpdateMyProfileDto:
+      type: object
+      properties:
+        name:
+          type: string
+      required:
+        - name
+    UpdateUserDto:
+      type: object
+      properties:
+        name:
+          type: string
     CreatePublisherDto:
       type: object
       properties:
@@ -815,7 +1027,7 @@ components:
           type: string
           example: 2024-03-15
         authorIds:
-          example: &a13
+          example: &a15
             - "1"
             - "2"
           type: array
@@ -844,7 +1056,7 @@ components:
           type: string
           example: 2024-03-15
         authorIds:
-          example: *a13
+          example: *a15
           type: array
           items:
             type: string

@@ -4,7 +4,7 @@ import { User, UserRole } from '../../users/entities/user.entity';
 
 export async function seedAdminUsers(dataSource: DataSource): Promise<void> {
   const emailsRaw = process.env.SEED_ADMIN_EMAILS ?? '';
-  const password = process.env.DEFAULT_ADMIN_PASSWORD;
+  const password = process.env.DEFAULT_USER_PASSWORD;
 
   // Parse, clean, and deduplicate emails
   const emails = [
@@ -27,7 +27,7 @@ export async function seedAdminUsers(dataSource: DataSource): Promise<void> {
   // If emails are provided, password must be set
   if (!password) {
     throw new Error(
-      '[admin-users] DEFAULT_ADMIN_PASSWORD is required when SEED_ADMIN_EMAILS is set.',
+      '[admin-users] DEFAULT_USER_PASSWORD is required when SEED_ADMIN_EMAILS is set.',
     );
   }
 
