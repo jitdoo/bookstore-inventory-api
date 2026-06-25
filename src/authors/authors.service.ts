@@ -26,6 +26,7 @@ export class AuthorsService {
   async findAll(query: AuthorQueryDto): Promise<PaginatedResponse<Author>> {
     const { page, limit, search, searchField, sortBy, sortDirection } = query;
 
+    // Search only when both field and keyword are provided
     const where =
       search && searchField ? { [searchField]: ILike(`%${search}%`) } : {};
 

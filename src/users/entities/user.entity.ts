@@ -1,9 +1,12 @@
+import { Branch } from '../../branches/entities/branch.entity';
 import {
   Column,
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
   Index,
+  JoinColumn,
+  ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
@@ -11,8 +14,8 @@ import {
 // User roles
 export enum UserRole {
   SUPER_ADMIN = 'SUPER_ADMIN',
-  WAREHOUSE_MANAGER = 'WAREHOUSE_MANAGER',
   BRANCH_MANAGER = 'BRANCH_MANAGER',
+  BRANCH_STAFF = 'BRANCH_STAFF',
 }
 
 @Entity('users')
@@ -47,4 +50,8 @@ export class User {
 
   @DeleteDateColumn({ type: 'timestamptz', name: 'deleted_at', nullable: true })
   deletedAt!: Date | null;
+
+  @ManyToOne(() => Branch, { nullable: true })
+  @JoinColumn({ name: 'branch_id' })
+  branch!: Branch | null;
 }
