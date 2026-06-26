@@ -25,7 +25,7 @@ export class CreateUserDto {
   @ApiProperty()
   @IsString()
   @IsOptional()
-  branchId!: string;
+  branchId?: string;
 
   @ApiProperty({ enum: UserRole })
   @IsEnum(UserRole)

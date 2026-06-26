@@ -45,12 +45,22 @@ export class UsersService {
       branchId: dto.branchId ?? null,
     });
 
+    // Validate role and branchId requirements
+    if (dto.role === UserRole.BRANCH_MANAGER && !dto.branchId) {
+      throw new BadRequestException(
+        'Branch ID is required for branch managers',
+      );
+    }
+    if (dto.role === UserRole.BRANCH_STAFF && !dto.branchId) {
+      throw new BadRequestException('Branch ID is required for branch staff');
+    }
+
     // Ensure email is unique and branch exists
     await this.ensureEmailUnique(dto.email);
     if (dto.branchId) {
       await this.ensureBranchExists(dto.branchId);
     }
-    if (dto.role === UserRole.BRANCH_MANAGER) {
+    if (dto.role === UserRole.BRANCH_MANAGER && dto.branchId) {
       await this.ensureNoExistingManager(dto.branchId);
     }
 
