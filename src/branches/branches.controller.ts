@@ -30,12 +30,16 @@ export class BranchesController {
   constructor(private readonly branchesService: BranchesService) {}
 
   @Get()
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.BRANCH_MANAGER)
   @ApiOperation({ summary: 'List branches (paginated, searchable by name)' })
   findAll(@Query() query: BranchQueryDto) {
     return this.branchesService.findAll(query);
   }
 
   @Get(':id')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.BRANCH_MANAGER)
   @ApiOperation({ summary: 'Get a branch by id' })
   findOne(@Param('id') id: string) {
     return this.branchesService.findOne(id);

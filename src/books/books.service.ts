@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { ILike, In, Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import {
   buildPaginatedResponse,
   PaginatedResponse,
@@ -47,28 +47,95 @@ export class BooksService {
   }
 
   async findAll(query: BookQueryDto): Promise<PaginatedResponse<Book>> {
-    const { page, limit, search, searchField, sortBy, sortDirection } = query;
-    const where =
-      search && searchField ? { [searchField]: ILike(`%${search}%`) } : {};
+    const {
+      page,
+      limit,
+      search,
+      searchField,
+      sortBy,
+      sortDirection,
+      publisherId,
+      authorId,
+    } = query;
 
-    const [data, totalCount] = await this.bookRepository.findAndCount({
-      where,
-      relations: ['publisher', 'authors'],
-      select: {
-        id: true,
-        title: true,
-        isbn: true,
-        price: true,
-        publishedDate: true,
-        createdAt: true,
-        updatedAt: true,
-        publisher: { id: true, name: true },
-        authors: { id: true, name: true },
-      },
-      order: { [sortBy]: sortDirection, title: 'ASC' },
-      skip: (page - 1) * limit,
-      take: limit,
-    });
+    const skip = (page - 1) * limit;
+
+    // Build base query with optional search and filters
+    const baseQb = this.bookRepository.createQueryBuilder('book');
+
+    // Search only when both field and keyword are provided
+    if (search && searchField) {
+      baseQb.andWhere(`book.${searchField} ILIKE :search`, {
+        search: `%${search}%`,
+      });
+    }
+
+    // Filter publisher if publisherId is provided
+    if (publisherId) {
+      baseQb.andWhere('book.publisherId = :publisherId', {
+        publisherId,
+      });
+    }
+
+    // Filter authors if authorId is provided
+    if (authorId) {
+      baseQb.andWhere(
+        `
+        EXISTS (
+          SELECT 1
+          FROM book_authors ba
+          WHERE ba.book_id = book.id
+          AND ba.author_id = :authorId
+        )
+        `,
+        { authorId },
+      );
+    }
+
+    const idQb = baseQb
+      .clone()
+      .select('book.id', 'id')
+      .orderBy(`book.${sortBy}`, sortDirection)
+      .addOrderBy('book.title', 'ASC')
+      .skip(skip)
+      .take(limit);
+
+    const countQb = baseQb.clone().select('COUNT(DISTINCT book.id)', 'count');
+
+    const idRows = await idQb.getRawMany<{ id: string }>();
+    const ids = idRows.map((r) => r.id);
+
+    const countRaw = await countQb.getRawOne<{ count: string }>();
+    const totalCount = Number(countRaw?.count ?? 0);
+
+    // empty page early return
+    if (ids.length === 0) {
+      return buildPaginatedResponse([], totalCount, page, limit);
+    }
+
+    const data = await this.bookRepository
+      .createQueryBuilder('book')
+      .leftJoinAndSelect('book.publisher', 'publisher')
+      .leftJoinAndSelect('book.authors', 'author')
+      .whereInIds(ids)
+      .select([
+        'book.id',
+        'book.title',
+        'book.isbn',
+        'book.price',
+        'book.publishedDate',
+        'book.createdAt',
+        'book.updatedAt',
+        'publisher.id',
+        'publisher.name',
+        'author.id',
+        'author.name',
+      ])
+      .orderBy(`array_position(:ids, book.id)`)
+      .setParameter('ids', ids)
+
+      .getMany();
+
     return buildPaginatedResponse(data, totalCount, page, limit);
   }
 

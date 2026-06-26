@@ -647,6 +647,16 @@ paths:
             enum:
               - title
               - publishedDate
+        - name: publisherId
+          required: false
+          in: query
+          schema:
+            type: string
+        - name: authorId
+          required: false
+          in: query
+          schema:
+            type: string
       responses:
         "200":
           description: ""

@@ -6,5 +6,5 @@ export class UpdateMyProfileDto {
   @IsString()
   @MaxLength(100)
   @IsOptional()
-  name!: string;
+  name?: string;
 }
