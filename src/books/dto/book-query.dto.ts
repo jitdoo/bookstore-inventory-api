@@ -30,4 +30,12 @@ export class BookQueryDto extends PaginationQueryDto {
   @IsOptional()
   @IsEnum(BookSortField)
   sortBy: BookSortField = BookSortField.PUBLISHED_DATE;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  publisherId?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  authorId?: string;
 }

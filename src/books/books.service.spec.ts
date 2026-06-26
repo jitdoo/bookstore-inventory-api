@@ -10,7 +10,11 @@ import { Book } from './entities/book.entity';
 import { Publisher } from '../publishers/entities/publisher.entity';
 import { Author } from '../authors/entities/author.entity';
 import { SortDirection } from '../common/dto/pagination-query.dto';
-import { BookSearchField, BookSortField } from './dto/book-query.dto';
+import {
+  BookQueryDto,
+  BookSearchField,
+  BookSortField,
+} from './dto/book-query.dto';
 
 describe('BooksService', () => {
   let service: BooksService;
@@ -89,51 +93,143 @@ describe('BooksService', () => {
   });
 
   describe('findAll', () => {
-    it('returns paginated data with relations loaded', async () => {
-      bookRepo.findAndCount.mockResolvedValue([[{ id: '1' }], 1]);
+    let service: BooksService;
+    let bookRepo: any;
+    let qb: any;
 
-      const result = await service.findAll({
-        page: 1,
-        limit: 20,
-        sortBy: BookSortField.PUBLISHED_DATE,
-        sortDirection: SortDirection.DESC,
-      });
+    const baseQuery: BookQueryDto = {
+      page: 1,
+      limit: 20,
+      sortBy: BookSortField.PUBLISHED_DATE,
+      sortDirection: SortDirection.DESC,
+    };
 
-      const callArg = bookRepo.findAndCount.mock.calls[0][0];
-      expect(callArg.relations).toEqual(['publisher', 'authors']);
-      expect(callArg.order).toEqual({ publishedDate: 'DESC', title: 'ASC' });
-      expect(result.meta.totalCount).toBe(1);
+    beforeEach(async () => {
+      qb = {
+        select: jest.fn().mockReturnThis(),
+        addSelect: jest.fn().mockReturnThis(),
+        leftJoinAndSelect: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        addOrderBy: jest.fn().mockReturnThis(),
+        whereInIds: jest.fn().mockReturnThis(),
+        setParameter: jest.fn().mockReturnThis(),
+        skip: jest.fn().mockReturnThis(),
+        take: jest.fn().mockReturnThis(),
+        clone: jest.fn(function (this: any) {
+          return this;
+        }),
+        getRawMany: jest.fn().mockResolvedValue([{ id: '1' }, { id: '2' }]),
+        getRawOne: jest.fn().mockResolvedValue({ count: '2' }),
+        getMany: jest.fn().mockResolvedValue([
+          { id: '1', title: 'A' },
+          { id: '2', title: 'B' },
+        ]),
+      };
+
+      bookRepo = {
+        createQueryBuilder: jest.fn().mockReturnValue(qb),
+      };
+
+      const moduleRef = await Test.createTestingModule({
+        providers: [
+          BooksService,
+          { provide: getRepositoryToken(Book), useValue: bookRepo },
+          {
+            provide: getRepositoryToken(Publisher),
+            useValue: { findOne: jest.fn() },
+          },
+          {
+            provide: getRepositoryToken(Author),
+            useValue: { find: jest.fn() },
+          },
+        ],
+      }).compile();
+
+      service = moduleRef.get(BooksService);
     });
 
-    it('applies search when field and keyword are provided', async () => {
-      bookRepo.findAndCount.mockResolvedValue([[], 0]);
+    it('returns paginated data with meta', async () => {
+      const result = await service.findAll(baseQuery);
+
+      expect(result.data).toHaveLength(2);
+      expect(result.meta.totalCount).toBe(2);
+      expect(result.meta.currentPage).toBe(1);
+    });
+
+    it('runs a 2-step query: ids first, then full load', async () => {
+      await service.findAll(baseQuery);
+
+      expect(qb.getRawMany).toHaveBeenCalled();
+      expect(qb.getRawOne).toHaveBeenCalled();
+      expect(qb.getMany).toHaveBeenCalled();
+      expect(qb.leftJoinAndSelect).toHaveBeenCalledWith(
+        'book.publisher',
+        'publisher',
+      );
+      expect(qb.leftJoinAndSelect).toHaveBeenCalledWith(
+        'book.authors',
+        'author',
+      );
+    });
+
+    it('paginates the id query', async () => {
+      await service.findAll({ ...baseQuery, page: 2, limit: 10 });
+      expect(qb.skip).toHaveBeenCalledWith(10);
+      expect(qb.take).toHaveBeenCalledWith(10);
+    });
+
+    it('applies search when field and keyword are given', async () => {
       await service.findAll({
-        page: 1,
-        limit: 20,
+        ...baseQuery,
         search: 'abc',
         searchField: BookSearchField.TITLE,
-        sortBy: BookSortField.PUBLISHED_DATE,
-        sortDirection: SortDirection.DESC,
       });
-      const callArg = bookRepo.findAndCount.mock.calls[0][0];
-      expect(callArg.where).toHaveProperty('title');
+      const calledWithSearch = qb.andWhere.mock.calls.some(
+        (c: any[]) => typeof c[0] === 'string' && c[0].includes('ILIKE'),
+      );
+      expect(calledWithSearch).toBe(true);
     });
 
-    it('selects only id and name for relations (slim list response)', async () => {
-      bookRepo.findAndCount.mockResolvedValue([[], 0]);
+    it('does not apply search without a keyword', async () => {
+      await service.findAll(baseQuery);
+      const calledWithSearch = qb.andWhere.mock.calls.some(
+        (c: any[]) => typeof c[0] === 'string' && c[0].includes('ILIKE'),
+      );
+      expect(calledWithSearch).toBe(false);
+    });
 
-      await service.findAll({
-        page: 1,
-        limit: 20,
-        sortBy: BookSortField.PUBLISHED_DATE,
-        sortDirection: SortDirection.DESC,
-      });
+    it('applies the publisher filter', async () => {
+      await service.findAll({ ...baseQuery, publisherId: '5' });
+      const calledWithPublisher = qb.andWhere.mock.calls.some(
+        (c: any[]) =>
+          typeof c[0] === 'string' &&
+          c[0].includes('publisherId') &&
+          c[1]?.publisherId === '5',
+      );
+      expect(calledWithPublisher).toBe(true);
+    });
 
-      const callArg = bookRepo.findAndCount.mock.calls[0][0];
-      expect(callArg.select.publisher).toEqual({ id: true, name: true });
-      expect(callArg.select.authors).toEqual({ id: true, name: true });
-      expect(callArg.select.publisherId).toBeUndefined();
-      expect(callArg.select.deletedAt).toBeUndefined();
+    it('applies the author filter via an EXISTS subquery', async () => {
+      await service.findAll({ ...baseQuery, authorId: '7' });
+      const calledWithAuthor = qb.andWhere.mock.calls.some(
+        (c: any[]) =>
+          typeof c[0] === 'string' &&
+          c[0].includes('EXISTS') &&
+          c[1]?.authorId === '7',
+      );
+      expect(calledWithAuthor).toBe(true);
+    });
+
+    it('returns an empty page without running step 2 when no ids match', async () => {
+      qb.getRawMany.mockResolvedValue([]);
+      qb.getRawOne.mockResolvedValue({ count: '0' });
+
+      const result = await service.findAll(baseQuery);
+
+      expect(result.data).toEqual([]);
+      expect(result.meta.totalCount).toBe(0);
+      expect(qb.getMany).not.toHaveBeenCalled();
     });
   });
 
